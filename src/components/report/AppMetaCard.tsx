@@ -2,12 +2,13 @@
 // Report page top section: app icon, name, developer, rating, installs, last updated.
 // Skeleton version shown while data loads.
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Star, Download, RefreshCw, Share2, Check, Globe, Smartphone } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabaseClient'
 import type { AnalysisRow } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
+import { fetchAppMetadata } from '@/lib/api'
 
 interface AppMetaCardProps {
     analysis: AnalysisRow
@@ -21,6 +22,40 @@ export function AppMetaCard({ analysis }: AppMetaCardProps) {
     const [isCopied, setIsCopied] = useState(false)
     const [isUpdating, setIsUpdating] = useState(false)
     const [iconError, setIconError] = useState(false)
+
+    // State for on-demand metadata fallback
+    const [metadata, setMetadata] = useState({
+        name: app_name,
+        icon: app_icon_url,
+        rating: app_rating,
+        installs: app_installs
+    })
+
+    // ── Fetch metadata if missing (fallback for old reports) ────────
+    useEffect(() => {
+        if (!metadata.name || !metadata.icon) {
+            fetchAppMetadata(analysis.app_id)
+                .then(m => {
+                    setMetadata({
+                        name: m.name,
+                        icon: m.icon,
+                        rating: m.rating,
+                        installs: m.installs
+                    })
+
+                    // Proactively update DB if owner, so it's persisted for others
+                    if (isOwner) {
+                        (supabase as any).from('analyses').update({
+                            app_name: m.name,
+                            app_icon_url: m.icon,
+                            app_rating: m.rating,
+                            app_installs: m.installs
+                        }).eq('id', id)
+                    }
+                })
+                .catch(err => console.warn('[AppMetaCard] Metadata fallback failed:', err))
+        }
+    }, [analysis.app_id, id, isOwner, metadata.icon, metadata.name])
 
     const handleShare = async () => {
         if (!isOwner || isUpdating) return
@@ -52,10 +87,10 @@ export function AppMetaCard({ analysis }: AppMetaCardProps) {
             {/* Icon */}
             <div className="relative group/icon flex-shrink-0">
                 <div className="absolute -inset-2 bg-brand-primary/20 rounded-2xl blur-lg opacity-0 group-hover/icon:opacity-100 transition-opacity" />
-                {app_icon_url && !iconError ? (
+                {metadata.icon && !iconError ? (
                     <img
-                        src={app_icon_url}
-                        alt={`${app_name ?? 'App'} icon`}
+                        src={metadata.icon}
+                        alt={`${metadata.name ?? 'App'} icon`}
                         className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border border-white/10 shadow-lg"
                         onError={() => setIconError(true)}
                         loading="lazy"
@@ -72,7 +107,7 @@ export function AppMetaCard({ analysis }: AppMetaCardProps) {
             <div className="flex-1 min-w-0 text-center md:text-left">
                 <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
                     <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-text-primary tracking-tight truncate">
-                        {app_name ?? analysis.app_id}
+                        {metadata.name ?? analysis.app_id}
                     </h1>
                     <span className="code-inline text-[10px] w-fit mx-auto md:mx-0 px-2.5 py-1 bg-white/5 rounded-full text-brand-hover border border-white/5">
                         {analysis.app_id}
@@ -80,15 +115,15 @@ export function AppMetaCard({ analysis }: AppMetaCardProps) {
                 </div>
 
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-8 gap-y-4">
-                    {app_rating != null && (
+                    {metadata.rating != null && (
                         <MetaStat icon={<Star className="w-4 h-4 fill-amber-400 text-amber-400" />}>
-                            <span className="text-text-primary font-bold text-lg">{app_rating.toFixed(1)}</span>
+                            <span className="text-text-primary font-bold text-lg">{metadata.rating.toFixed(1)}</span>
                             <span className="text-text-muted font-medium"> / 5</span>
                         </MetaStat>
                     )}
-                    {app_installs && (
+                    {metadata.installs && (
                         <MetaStat icon={<Download className="w-4 h-4 text-brand-primary" />}>
-                            <span className="text-text-secondary font-bold text-lg">{app_installs}</span>
+                            <span className="text-text-secondary font-bold text-lg">{metadata.installs}</span>
                         </MetaStat>
                     )}
                     <MetaStat icon={<RefreshCw className="w-4 h-4 text-text-muted" />}>
