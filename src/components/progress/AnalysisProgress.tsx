@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query'
 // ── Stage → human-readable label map ────────────────────────────
 const STAGE_LABELS: Record<string, string> = {
     pending: 'Initialising analysis…',
+    scraping: 'Starting data collection…',
     scraping_1star: 'Fetching 1-star reviews…',
     scraping_2star: 'Fetching 2-star reviews…',
     scraping_3star: 'Fetching 3-star reviews…',

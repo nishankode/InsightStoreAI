@@ -44,6 +44,9 @@ async function runPipeline(
     }
 
     try {
+        // ── Broadcast start immediately ────────────────────────────────
+        await broadcastProgress({ supabaseUrl, serviceRoleKey, analysisId, stage: 'scraping', percent: 2 })
+
         // ── Step 1: Scrape reviews ─────────────────────────────────────
         const scrapeRes = await callFunction('scrape-reviews', {
             app_id: appId,

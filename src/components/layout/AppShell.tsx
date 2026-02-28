@@ -49,13 +49,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             <Sparkles className="w-5 h-5 text-white" />
                         </div>
                         <span className="font-heading font-bold text-lg text-text-primary tracking-tight">
-                            InsightStore <span className="text-brand-primary transition-colors group-hover:text-brand-hover">AI</span>
+                            AppLifter<span className="text-brand-primary transition-colors group-hover:text-brand-hover">AI</span>
                         </span>
                     </Link>
 
                     {/* Nav links */}
                     <nav className="flex items-center gap-2" aria-label="Main navigation">
-                        <NavLink to="/" active={isHomePage}>
+                        <NavLink
+                            to="/"
+                            active={isHomePage}
+                            onClick={(e) => {
+                                if (isHomePage) {
+                                    window.dispatchEvent(new CustomEvent('applifter:scroll-to-search'))
+                                }
+                            }}
+                        >
                             Analyse
                         </NavLink>
 
@@ -98,7 +106,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <footer className="border-t border-bg-border mt-auto bg-bg-surface/50">
                     <div className="page-wrapper py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
                         <p className="text-text-muted text-xs">
-                            © 2026 InsightStore AI. All rights reserved.
+                            © 2026 AppLifterAI. All rights reserved.
                         </p>
                         <div className="flex items-center gap-4 text-text-muted text-xs font-mono">
                             <span>Powered by Gemini 2.0 Flash</span>
@@ -111,10 +119,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 }
 
 // ── Small NavLink helper ──────────────────────────────────────────
-function NavLink({ to, active, children }: { to: string; active: boolean; children: React.ReactNode }) {
+function NavLink({ to, active, children, onClick }: { to: string; active: boolean; children: React.ReactNode; onClick?: () => void }) {
     return (
         <Link
             to={to}
+            onClick={onClick}
             className={cn(
                 'text-xs font-semibold px-4 py-2 rounded-full transition-all duration-300',
                 active

@@ -3,7 +3,7 @@
 // Skeleton version shown while data loads.
 
 import { useState } from 'react'
-import { Star, Download, RefreshCw, Share2, Check, Globe } from 'lucide-react'
+import { Star, Download, RefreshCw, Share2, Check, Globe, Smartphone } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabaseClient'
 import type { AnalysisRow } from '@/lib/supabaseClient'
@@ -20,6 +20,7 @@ export function AppMetaCard({ analysis }: AppMetaCardProps) {
     const [isShared, setIsShared] = useState(is_public)
     const [isCopied, setIsCopied] = useState(false)
     const [isUpdating, setIsUpdating] = useState(false)
+    const [iconError, setIconError] = useState(false)
 
     const handleShare = async () => {
         if (!isOwner || isUpdating) return
@@ -51,16 +52,18 @@ export function AppMetaCard({ analysis }: AppMetaCardProps) {
             {/* Icon */}
             <div className="relative group/icon flex-shrink-0">
                 <div className="absolute -inset-2 bg-brand-primary/20 rounded-2xl blur-lg opacity-0 group-hover/icon:opacity-100 transition-opacity" />
-                {app_icon_url ? (
+                {app_icon_url && !iconError ? (
                     <img
                         src={app_icon_url}
                         alt={`${app_name ?? 'App'} icon`}
                         className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border border-white/10 shadow-lg"
+                        onError={() => setIconError(true)}
                         loading="lazy"
                     />
                 ) : (
-                    <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-bg-elevated border border-white/10 flex items-center justify-center shadow-lg">
-                        <span className="text-4xl" aria-hidden>📱</span>
+                    <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-bg-elevated/50 border border-white/10 flex items-center justify-center shadow-lg group-hover/icon:border-brand-primary/30 transition-colors">
+                        <Smartphone className="w-10 h-10 text-brand-primary/40" aria-hidden />
+                        <div className="absolute inset-0 bg-brand-primary/5 rounded-2xl" />
                     </div>
                 )}
             </div>

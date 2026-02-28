@@ -92,7 +92,7 @@ export function SearchBar({ onResult, onClear }: SearchBarProps) {
                     type="text"
                     id="app-search-input"
                     name="query"
-                    placeholder="Paste a Play Store URL or enter a package ID…"
+                    placeholder="Paste a Play Store URL or package ID"
                     aria-label="App search input"
                     aria-describedby={error ? 'search-error' : undefined}
                     className={cn(
@@ -151,7 +151,7 @@ export function SearchBar({ onResult, onClear }: SearchBarProps) {
                 <p className="text-text-muted text-xs">
                     Example:{' '}
                     <span className="font-mono text-text-secondary">com.spotify.music</span>
-                    {' or paste a full Play Store URL'}
+                    {' or paste a Play Store URL'}
                 </p>
             )}
         </div>

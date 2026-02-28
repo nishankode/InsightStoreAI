@@ -66,15 +66,49 @@ Deno.serve(async (req: Request) => {
 
     const supabase = getAdminClient()
 
-    // ── Update analysis status to 'scraping' ────────────────────────
+    // ── Helper: broadcast progress ───────────────────────────────────
+    const broadcast = (stage: string, percent: number) =>
+        broadcastProgress({ supabaseUrl, serviceRoleKey, analysisId: analysis_id, stage, percent })
+
+    console.log(`[scrape-reviews] Starting for app=${app_id}, analysis=${analysis_id}`)
+
+    // ── Update analysis status and broadcast initial progress ────────
     await supabase
         .from('analyses')
         .update({ status: 'scraping' })
         .eq('id', analysis_id)
 
-    // ── Helper: broadcast progress ───────────────────────────────────
-    const broadcast = (stage: string, percent: number) =>
-        broadcastProgress({ supabaseUrl, serviceRoleKey, analysisId: analysis_id, stage, percent })
+    await broadcast('scraping', 5) // Move needle immediately
+
+    // ── Fetch metadata from Play Store ─────────────────────────────
+    console.log(`[scrape-reviews] Fetching metadata for ${app_id}...`)
+    try {
+        const app = await gplay.app({ appId: app_id, throttle: 10 })
+        console.log(`[scrape-reviews] Metadata fetched: ${app.title}`)
+        const { error: updateError } = await supabase
+            .from('analyses')
+            .update({
+                app_name: app.title,
+                app_icon_url: app.icon,
+                app_rating: Math.round((app.score ?? 0) * 10) / 10,
+                app_installs: app.installs ?? app.maxInstalls?.toLocaleString() ?? 'Unknown',
+            })
+            .eq('id', analysis_id)
+
+        if (updateError) {
+            console.error(`[scrape-reviews] Metadata update error for ${app_id}:`, updateError)
+        }
+    } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        console.warn(`[scrape-reviews] Metadata fetch failed for ${app_id}:`, message)
+        if (message.includes('404') || message.toLowerCase().includes('not found')) {
+            await supabase
+                .from('analyses')
+                .update({ status: 'error' })
+                .eq('id', analysis_id)
+            return jsonResponse({ error: 'app_not_found' }, 404)
+        }
+    }
 
     // ── Check 24-hour cache for all 3 tiers ─────────────────────────
     const { data: cachedRows } = await supabase

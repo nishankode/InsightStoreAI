@@ -1,7 +1,7 @@
 // src/pages/HomePage.tsx
 // F-01: Main landing page — Premium Redesign (Securify-style)
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SearchBar } from '@/components/search/SearchBar'
 import { AppPreviewCard } from '@/components/search/AppPreviewCard'
@@ -24,6 +24,16 @@ export default function HomePage() {
     const [appMetadata, setAppMetadata] = useState<AppMetadata | null>(null)
     const [analysisError, setAnalysisError] = useState<string | null>(null)
     const navigate = useNavigate()
+    const searchRef = useRef<HTMLDivElement>(null)
+
+    // ── Interaction: Scroll to search ───────────────────────────
+    useEffect(() => {
+        const handleScrollRequest = () => {
+            searchRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+        window.addEventListener('applifter:scroll-to-search', handleScrollRequest)
+        return () => window.removeEventListener('applifter:scroll-to-search', handleScrollRequest)
+    }, [])
 
     // ── Run analysis mutation ────────────────────────────────────────
     const { mutate: startAnalysis, isPending: isAnalysing } = useMutation({
@@ -89,20 +99,20 @@ export default function HomePage() {
                     </div>
 
                     {/* Backlit Hero Title */}
-                    <div className="hero-backlight">
+                    <div className="hero-backlight text-center">
                         <h1 className="font-heading font-extrabold text-5xl sm:text-7xl md:text-8xl text-text-primary tracking-tight max-w-5xl leading-[1.05] mb-8">
-                            Turn <span className="highlight-violet">1-star reviews</span> <br className="hidden sm:block" />
-                            into a product roadmap
+                            Discover What <br className="hidden sm:block" />
+                            Users <span className="text-brand-primary">Hate.</span> <br className="hidden sm:block" />
+                            Build What They <span className="text-brand-primary">Love.</span>
                         </h1>
                     </div>
 
                     <p className="text-text-secondary text-lg sm:text-xl md:text-2xl max-w-3xl leading-relaxed mx-auto font-medium opacity-90">
-                        Stop manual review sorting. Our AI extracts root-cause pain points and
-                        delivers actionable, prioritized engineering roadmaps in seconds.
+                        Turn thousands of Play Store reviews into clear product decisions, prioritized fixes, and actionable engineering roadmaps.
                     </p>
 
                     {/* ── Search bar Integration (Enhanced Glow) ── */}
-                    <div className="w-full max-w-2xl mt-6 relative group">
+                    <div ref={searchRef} className="w-full max-w-2xl mt-6 relative group">
                         <div className="absolute -inset-2 bg-gradient-to-r from-brand-primary/20 via-brand-hover/20 to-brand-primary/20 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500"></div>
                         <div className="relative">
                             <SearchBar onResult={handleResult} onClear={handleClear} />
@@ -129,11 +139,11 @@ export default function HomePage() {
                     )}
                 </div>
 
-                {/* ── How it Works Guide ── */}
+                {/* ── Process Section ── */}
                 <div className="mt-40">
                     <div className="text-center mb-16 px-4">
                         <h2 className="text-brand-primary font-mono text-xs font-bold uppercase tracking-[0.2em] mb-4">Process</h2>
-                        <h3 className="font-heading font-bold text-3xl sm:text-5xl tracking-tight">Three steps to clarity</h3>
+                        <h3 className="font-heading font-bold text-3xl sm:text-5xl tracking-tight">From Reviews to Decisions in Seconds</h3>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
@@ -141,7 +151,7 @@ export default function HomePage() {
                             <div key={idx} className="group relative">
                                 <div className="absolute -inset-2 bg-gradient-to-b from-brand-primary/10 to-transparent rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl" />
                                 <div className="glass p-10 rounded-[2rem] border-white/5 hover:border-brand-primary/20 transition-all duration-300 h-full relative z-10 flex flex-col items-center text-center">
-                                    <div className="w-16 h-16 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-primary mb-8 group-hover:scale-110 group-hover:bg-brand-primary/20 transition-all">
+                                    <div className="w-16 h-16 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-primary mb-8 group-hover:scale-110 group-hover:bg-brand-primary/20 group-hover:text-white transition-all">
                                         {step.icon}
                                     </div>
                                     <h3 className="font-heading font-bold text-xl mb-4 tracking-tight">
@@ -164,28 +174,83 @@ export default function HomePage() {
 
                 <div className="page-wrapper">
                     <div className="max-w-4xl mb-20 px-4">
-                        <h2 className="text-brand-primary font-mono text-xs font-bold uppercase tracking-[0.2em] mb-5">Core Capabilities</h2>
-                        <h3 className="font-heading font-bold text-4xl sm:text-5xl leading-[1.1] tracking-tight text-white">
-                            Stop guessing. Start solving the problems that <span className="text-brand-hover">actually hurt</span> your ratings.
+                        <h2 className="text-brand-primary font-mono text-xs font-bold uppercase tracking-[0.2em] mb-5">Core Values</h2>
+                        <h3 className="font-heading font-bold text-4xl sm:text-5xl leading-[1.1] tracking-tight text-white/90">
+                            Stop Guessing What to Fix Next
                         </h3>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-4">
                         {FEATURES.map((feature, idx) => (
-                            <div key={idx} className="glass p-8 flex flex-col gap-6 border-white/5 hover:border-brand-primary/20 group transition-all duration-300 rounded-3xl">
-                                <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-all duration-300">
-                                    {feature.icon}
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <h4 className="font-heading font-bold text-lg text-text-primary tracking-tight">
-                                        {feature.title}
-                                    </h4>
-                                    <p className="text-text-muted text-sm leading-relaxed font-medium">
-                                        {feature.desc}
-                                    </p>
+                            <div key={idx} className="group relative">
+                                <div className="absolute -inset-2 bg-gradient-to-b from-brand-primary/10 to-transparent rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl" />
+                                <div className="glass p-8 flex flex-col gap-6 border-white/5 hover:border-brand-primary/20 transition-all duration-300 rounded-3xl h-full relative z-10">
+                                    <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-all duration-300">
+                                        {feature.icon}
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <h4 className="font-heading font-bold text-lg text-text-primary tracking-tight">
+                                            {feature.title}
+                                        </h4>
+                                        <p className="text-text-muted text-sm leading-relaxed font-medium">
+                                            {feature.desc}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ── Positioning Section ── */}
+            <section className="py-32 relative overflow-hidden">
+                <div className="page-wrapper px-4">
+                    <div className="glass p-12 sm:p-20 rounded-[3rem] border-white/5 relative overflow-hidden flex flex-col items-center text-center">
+                        <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-brand-primary/5 blur-[120px] -z-10" />
+                        <h3 className="font-heading font-bold text-3xl sm:text-5xl tracking-tight mb-8">
+                            Built for Builders Who Move Fast
+                        </h3>
+                        <p className="text-text-secondary text-lg sm:text-xl max-w-2xl mb-12 font-medium">
+                            AppLifterAI helps modern product teams make confident decisions without manual research.
+                        </p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-4xl">
+                            {['Indie developers', 'Startup founders', 'Product managers', 'App agencies'].map((role) => (
+                                <div key={role} className="group relative">
+                                    <div className="absolute -inset-1 bg-gradient-to-b from-brand-primary/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-lg" />
+                                    <div className="glass py-4 px-6 rounded-2xl border-white/5 flex items-center justify-center gap-2 hover:border-brand-primary/20 transition-all relative z-10 h-full">
+                                        <CheckCircle2 className="w-4 h-4 text-brand-primary" />
+                                        <span className="text-sm text-text-primary/90">{role}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ── Trust / Authority Section ── */}
+            <section className="py-32 bg-bg-surface/30 border-t border-white/5">
+                <div className="page-wrapper px-4 flex flex-col items-center text-center">
+                    <h3 className="font-heading font-bold text-3xl sm:text-5xl tracking-tight mb-16">
+                        Make Product Decisions Using Real User Data
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12 w-full max-w-4xl">
+                        {[
+                            { label: 'No surveys.', desc: 'Skip the bias of active questionnaires.' },
+                            { label: 'No assumptions.', desc: 'Avoid internal bias and feature bloat.' },
+                            { label: 'No guesswork.', desc: 'Know exactly what blocks your growth.' }
+                        ].map((item, idx) => (
+                            <div key={idx} className="flex flex-col gap-4">
+                                <h4 className="text-brand-primary font-heading font-bold text-2xl tracking-tight">{item.label}</h4>
+                                <p className="text-text-muted font-medium">{item.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="mt-20 p-8 glass rounded-3xl border-brand-primary/10 max-w-2xl">
+                        <p className="text-text-primary text-lg font-bold italic opacity-90">
+                            "Only verified feedback from real users. No more manual sorting of thousands of reviews."
+                        </p>
                     </div>
                 </div>
             </section>
@@ -199,12 +264,12 @@ export default function HomePage() {
                                 <div className="w-8 h-8 rounded-lg bg-brand-primary flex items-center justify-center shadow-glow">
                                     <Sparkles className="w-5 h-5 text-white" />
                                 </div>
-                                <span className="font-heading font-bold text-xl tracking-tight">
-                                    InsightStore <span className="text-brand-primary">AI</span>
+                                <span className="font-heading font-bold text-xl tracking-tight text-white">
+                                    AppLifter<span className="text-brand-primary">AI</span>
                                 </span>
                             </div>
-                            <p className="text-text-muted text-sm max-w-xs leading-relaxed">
-                                The ultimate AI toolkit for mobile product managers and developers to dominate the app store categories.
+                            <p className="text-text-muted text-sm max-w-xs leading-relaxed font-medium">
+                                AppLifterAI helps modern teams turn user feedback into winning products.
                             </p>
                         </div>
 
@@ -237,10 +302,10 @@ export default function HomePage() {
 
                     <div className="border-t border-bg-border pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
                         <p className="text-text-muted text-xs">
-                            © 2026 InsightStore AI. Built for the next generation of apps.
+                            © 2026 AppLifterAI. Built for the next generation of apps.
                         </p>
                         <div className="flex items-center gap-6 text-text-muted text-xs font-mono">
-                            <span>v1.0.4-beta</span>
+                            <span>v1.0.5-beta</span>
                             <span>Region: US-East</span>
                         </div>
                     </div>
@@ -253,41 +318,41 @@ export default function HomePage() {
 const STEPS = [
     {
         icon: <Search className="w-6 h-6" />,
-        title: 'Paste Play Store URL',
-        desc: 'Simply search or paste the link to any Android application. We handle the heavy lifting of fetching metadata.',
+        title: 'Paste Any App',
+        desc: 'Search or paste any Android app. We automatically collect real user feedback.',
     },
     {
         icon: <Zap className="w-6 h-6" />,
-        title: 'Deep AI Extraction',
-        desc: 'Gemini 2.0 Flash Lite scrapes 300+ recent low-star reviews to find recurring root-cause patterns.',
+        title: 'AI Root-Cause Analysis',
+        desc: 'AppLifterAI analyzes hundreds of low-star reviews to uncover recurring problems and hidden friction.',
     },
     {
         icon: <BarChart3 className="w-6 h-6" />,
-        title: 'Instant Roadmap',
-        desc: 'Get a prioritised list of pain points, severity scores, and actionable engineering recommendations.',
+        title: 'Instant Product Roadmap',
+        desc: 'Receive prioritized fixes, severity scoring, and engineering-ready recommendations.',
     },
 ]
 
 const FEATURES = [
     {
         icon: <Layers className="w-5 h-5" />,
-        title: 'Structured Insights',
-        desc: 'Pain points are categorised by type: Bug, UX, Performance, or Feature Gap.',
+        title: 'Structured Pain Points',
+        desc: 'Automatically grouped into Bugs, UX Issues, Performance Problems, and Missing Features.',
     },
     {
-        icon: <Smartphone className="w-5 h-5 text-brand-primary" />,
-        title: 'App Store Context',
-        desc: 'Direct quotes from users are mapped to each insight for verified evidence.',
+        icon: <Smartphone className="w-5 h-5" />,
+        title: 'Evidence-Backed Insights',
+        desc: 'Every insight includes real user quotes for validation.',
     },
     {
-        icon: <CheckCircle2 className="w-5 h-5 text-brand-primary" />,
-        title: 'Prioritised ROI',
-        desc: 'Each fix is rated by effort vs. impact to help you allocate resources efficiently.',
+        icon: <CheckCircle2 className="w-5 h-5" />,
+        title: 'Impact-Driven Prioritization',
+        desc: 'Know which fixes improve ratings fastest using effort vs. impact scoring.',
     },
     {
-        icon: <ShieldCheck className="w-5 h-5 text-brand-primary" />,
-        title: 'Competitor Intel',
-        desc: 'Analyse your competitors to find gaps in their products that you can exploit.',
+        icon: <ShieldCheck className="w-5 h-5" />,
+        title: 'Competitive Intelligence',
+        desc: 'Analyze competitor weaknesses and uncover opportunities to outperform them.',
     },
 ]
 

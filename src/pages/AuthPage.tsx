@@ -26,7 +26,7 @@ export default function AuthPage() {
                             <span className="text-white text-base font-bold font-heading">IS</span>
                         </div>
                         <span className="font-heading font-extrabold text-text-primary text-2xl tracking-tight">
-                            InsightStore <span className="text-brand-primary">AI</span>
+                            AppLifter <span className="text-brand-primary">AI</span>
                         </span>
                     </div>
 
@@ -36,7 +36,7 @@ export default function AuthPage() {
                     <p className="text-text-secondary text-sm font-medium opacity-80">
                         {mode === 'login'
                             ? 'Your analysis dashboard is waiting.'
-                            : 'Get prioritised roadmaps in 60 seconds — no card needed.'
+                            : 'Get prioritised roadmaps in 60 seconds, no card needed.'
                         }
                     </p>
                 </div>
@@ -52,7 +52,7 @@ export default function AuthPage() {
 
                 {/* Semantic Footer */}
                 <p className="text-text-muted text-[11px] text-center mt-10 font-medium tracking-wide">
-                    By accessing InsightStore AI, you acknowledge our{' '}
+                    By accessing AppLifter AI, you acknowledge our{' '}
                     <a href="#" className="text-text-secondary underline underline-offset-4 hover:text-brand-primary transition-colors">Terms</a>
                     {' & '}
                     <a href="#" className="text-text-secondary underline underline-offset-4 hover:text-brand-primary transition-colors">Privacy Policy</a>.
