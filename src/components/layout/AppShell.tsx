@@ -58,7 +58,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         <NavLink
                             to="/"
                             active={isHomePage}
-                            onClick={(e) => {
+                            onClick={() => {
                                 if (isHomePage) {
                                     window.dispatchEvent(new CustomEvent('applifter:scroll-to-search'))
                                 }
