@@ -157,64 +157,83 @@ export function AnalysisProgress({ analysisId, onRetry }: AnalysisProgressProps)
     // ── Main progress UI ─────────────────────────────────────────────
     return (
         <FullscreenShell>
-            <div className="flex flex-col items-center gap-6 w-full max-w-sm">
-                {/* Animated logomark */}
-                <div className="w-14 h-14 rounded-xl bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center">
-                    <div className="w-6 h-6 rounded-md bg-brand-primary animate-pulse" />
+            <div className="flex flex-col items-center gap-10 w-full max-w-md animate-fade-in px-4">
+                {/* Animated Premium Logomark */}
+                <div className="relative group">
+                    <div className="absolute -inset-4 bg-brand-primary/20 rounded-full blur-xl animate-pulse" />
+                    <div className="relative w-20 h-20 rounded-2xl bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center shadow-glow">
+                        <div className="w-8 h-8 rounded-lg bg-brand-primary shadow-[0_0_20px_rgba(124,58,237,0.5)] animate-bounce" style={{ animationDuration: '2s' }} />
+                    </div>
                 </div>
 
-                {/* Stage label */}
-                <div className="text-center">
-                    <p className="text-text-primary font-medium text-sm mb-1 transition-all duration-300">
+                {/* Stage information */}
+                <div className="text-center space-y-3">
+                    <h2 className="text-text-primary font-bold text-xl tracking-tight transition-all duration-500">
                         {label}
-                    </p>
-                    <p className="text-text-muted text-xs font-mono">
-                        {state.percent}% complete
-                    </p>
+                    </h2>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse" />
+                        <span className="text-brand-primary text-[10px] font-extrabold uppercase tracking-widest font-mono">
+                            {state.percent}% complete
+                        </span>
+                    </div>
                 </div>
 
-                {/* Progress bar */}
-                <Progress value={state.percent} className="w-full" aria-label="Analysis progress" />
+                {/* Refined Progress bar */}
+                <div className="w-full relative py-2">
+                    <div className="absolute -inset-1 bg-brand-primary/5 blur-md rounded-full" />
+                    <Progress
+                        value={state.percent}
+                        className="h-2.5 w-full bg-white/5 overflow-hidden rounded-full border border-white/5"
+                        aria-label="Analysis progress"
+                    />
+                </div>
 
-                {/* Stage breadcrumb pills */}
-                <div className="flex flex-wrap justify-center gap-1.5 mt-1">
+                {/* Stage breadcrumb pills (Refined) */}
+                <div className="flex flex-wrap justify-center gap-2.5">
                     {BREADCRUMB_STAGES.map(({ stage, label: crumbLabel, threshold }) => (
-                        <span
+                        <div
                             key={stage}
-                            className={`text-xs px-2 py-0.5 rounded-full transition-all duration-300 ${state.percent >= threshold
-                                ? 'bg-brand-primary/10 text-brand-primary border border-brand-primary/20'
-                                : 'bg-bg-elevated text-text-muted border border-bg-border'
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-2xl text-[10px] font-bold tracking-wider uppercase transition-all duration-500 ${state.percent >= threshold
+                                ? 'bg-brand-primary/10 text-brand-primary border border-brand-primary/30 shadow-glow-violet/5'
+                                : 'bg-white/3 text-text-muted border border-white/5 opacity-40'
                                 }`}
                         >
+                            <div className={`w-1 h-1 rounded-full ${state.percent >= threshold ? 'bg-brand-primary shadow-glow' : 'bg-current opacity-30'}`} />
                             {crumbLabel}
-                        </span>
+                        </div>
                     ))}
                 </div>
 
-                {/* 30-second timeout warning */}
+                {/* 30-second timeout warning (Refined) */}
                 {state.isTimedOut && (
-                    <p className="text-text-muted text-xs text-center animate-fade-in">
-                        Taking longer than expected… The analysis is still running in the background.
-                    </p>
+                    <div className="flex items-center gap-2 text-text-muted text-[11px] font-medium animate-fade-in bg-white/5 px-4 py-2 rounded-full border border-white/5">
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                        <span>Taking a moment... heavy analysis in progress</span>
+                    </div>
                 )}
             </div>
         </FullscreenShell>
     )
 }
 
-// ── Visual breadcrumb stages ─────────────────────────────────────
+// ── Visual breadcrumb stages (Metadata) ─────────────────────────
 const BREADCRUMB_STAGES = [
-    { stage: 'scraping', label: 'Scraping', threshold: 10 },
-    { stage: 'ai', label: 'AI Analysis', threshold: 50 },
-    { stage: 'saving', label: 'Saving', threshold: 95 },
-    { stage: 'complete', label: 'Complete', threshold: 100 },
+    { stage: 'fetching', label: 'Extracting', threshold: 10 },
+    { stage: 'analyzing', label: 'Processing', threshold: 50 },
+    { stage: 'organizing', label: 'Structuring', threshold: 85 },
+    { stage: 'finalizing', label: 'Finalizing', threshold: 100 },
 ]
 
-// ── Fullscreen layout shell ──────────────────────────────────────
+// ── Fullscreen layout shell (Standardised Premium Layout) ────────
 function FullscreenShell({ children }: { children: React.ReactNode }) {
     return (
-        <div className="min-h-screen bg-bg-base flex flex-col items-center justify-center p-6">
-            <div className="card w-full max-w-sm text-center items-center flex flex-col gap-6">
+        <div className="min-h-screen bg-bg-base relative isolate overflow-hidden flex flex-col items-center justify-center p-6 sm:p-12">
+            {/* Background Aesthetics */}
+            <div className="absolute inset-0 -z-10 bg-grid opacity-30" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-glow-violet opacity-10 -z-10 blur-[150px]" />
+
+            <div className="glass w-full max-w-lg p-10 sm:p-16 rounded-[3rem] border-white/5 text-center items-center flex flex-col gap-10 shadow-glass animate-scale-in">
                 {children}
             </div>
         </div>

@@ -54,65 +54,80 @@ export function PainPointCard({ painPoint }: PainPointCardProps) {
 
     return (
         <article
-            className="card gap-4 group hover:border-bg-border/80 transition-colors"
+            className="glass group p-8 rounded-[2.5rem] border-white/5 flex flex-col gap-6 shadow-glass hover:shadow-glow-violet/10 transition-all duration-500 animate-fade-in"
             aria-label={`${painPoint.category}: ${painPoint.severity} severity`}
         >
             {/* ── Header row ──────────────────────────────────────────── */}
-            <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                    {/* Severity badge */}
-                    <span className={cn('badge text-xs', sev.badgeClass)}>
-                        <span className={cn('inline-block w-1.5 h-1.5 rounded-full', sev.dotColor)} />
-                        {sev.label}
-                    </span>
+            <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3 flex-wrap">
+                    {/* Severity badge with Glow */}
+                    <div className="relative group/sev">
+                        <div className={cn('absolute -inset-1 blur-md opacity-40 rounded-full transition-opacity group-hover/sev:opacity-70', sev.dotColor)} />
+                        <span className={cn('relative badge px-3 py-1 text-[10px] font-bold tracking-wider uppercase border-white/10 shadow-sm', sev.badgeClass)}>
+                            <span className={cn('inline-block w-1.5 h-1.5 rounded-full mr-2 shadow-sm', sev.dotColor)} />
+                            {sev.label}
+                        </span>
+                    </div>
 
                     {/* Category tag */}
-                    <span className="badge badge-default text-xs">{painPoint.category}</span>
+                    <span className="badge bg-white/5 text-text-muted border border-white/5 text-[10px] font-bold tracking-wider uppercase px-3 py-1">
+                        {painPoint.category}
+                    </span>
                 </div>
 
                 {/* Frequency pill */}
-                <span
-                    className="text-xs text-text-muted whitespace-nowrap"
-                    title="Number of reviews mentioning this issue"
-                >
-                    {painPoint.frequency} reviews
-                </span>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-full border border-white/5">
+                    <TrendingUp className="w-3 h-3 text-brand-primary opacity-70" />
+                    <span className="text-[10px] text-text-muted font-bold tracking-tight">
+                        {painPoint.frequency}
+                    </span>
+                </div>
             </div>
 
             {/* ── Description ─────────────────────────────────────────── */}
-            <p className="text-text-secondary text-sm leading-relaxed">
+            <p className="text-text-primary text-base font-medium leading-relaxed tracking-tight">
                 {painPoint.description}
             </p>
 
             {/* ── Representative quotes ───────────────────────────────── */}
             {quotes.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-3 pt-2">
                     {quotes.map((quote, i) => (
                         <blockquote
                             key={i}
-                            className="flex items-start gap-2 text-xs text-text-muted italic border-l-2 border-bg-border pl-3 leading-relaxed"
+                            className="relative flex items-start gap-3 p-4 bg-white/5 rounded-2xl border border-white/5 group/quote hover:bg-white/10 transition-colors"
                         >
-                            <Quote className="w-3 h-3 mt-0.5 flex-shrink-0 text-text-muted/50" aria-hidden />
-                            {quote}
+                            <Quote className="w-4 h-4 text-brand-primary opacity-40 shrink-0 mt-0.5" aria-hidden />
+                            <p className="text-sm text-text-secondary leading-relaxed font-medium italic opacity-80">
+                                "{quote}"
+                            </p>
                         </blockquote>
                     ))}
                 </div>
             )}
 
-            {/* ── Improvement plan ────────────────────────────────────── */}
+            {/* ── Improvement plan (Integrated) ────────────────────────── */}
             {imp && (
-                <div className="bg-bg-elevated rounded-lg p-3 border border-bg-border space-y-2">
-                    <div className="flex items-center gap-1.5 text-xs text-text-muted">
-                        {phase.icon}
-                        <span className="font-medium text-text-secondary">{phase.label}</span>
-                        <span className="text-bg-border">·</span>
-                        <span>Effort: {imp.effort}</span>
-                        <span className="text-bg-border">·</span>
-                        <span>Impact: {imp.impact}</span>
+                <div className="mt-auto pt-6 border-t border-white/5 space-y-4">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] font-bold tracking-wider uppercase text-text-muted">
+                        <div className="flex items-center gap-1.5 text-brand-primary">
+                            {phase.icon}
+                            <span>{phase.label}</span>
+                        </div>
+                        <span className="opacity-20">|</span>
+                        <span>Effort: <span className="text-text-secondary">{imp.effort}</span></span>
+                        <span className="opacity-20">|</span>
+                        <span>Impact: <span className="text-text-secondary">{imp.impact}</span></span>
                     </div>
-                    <p className="text-sm text-text-primary leading-relaxed">
-                        {imp.recommendation}
-                    </p>
+
+                    <div className="p-5 bg-brand-primary/5 rounded-2xl border border-brand-primary/10 group/rec hover:bg-brand-primary/10 transition-colors">
+                        <div className="flex items-start gap-3">
+                            <Zap className="w-4 h-4 text-brand-primary shrink-0 mt-0.5" />
+                            <p className="text-sm text-text-primary leading-relaxed font-semibold">
+                                {imp.recommendation}
+                            </p>
+                        </div>
+                    </div>
                 </div>
             )}
         </article>

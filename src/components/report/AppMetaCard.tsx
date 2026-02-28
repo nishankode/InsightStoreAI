@@ -47,45 +47,50 @@ export function AppMetaCard({ analysis }: AppMetaCardProps) {
     }
 
     return (
-        <div className="card flex flex-col md:flex-row items-start gap-5">
+        <div className="glass p-8 sm:p-10 rounded-[2.5rem] border-white/5 flex flex-col md:flex-row items-center md:items-start gap-8 shadow-glass transition-all duration-300">
             {/* Icon */}
-            <div className="flex-shrink-0">
+            <div className="relative group/icon flex-shrink-0">
+                <div className="absolute -inset-2 bg-brand-primary/20 rounded-2xl blur-lg opacity-0 group-hover/icon:opacity-100 transition-opacity" />
                 {app_icon_url ? (
                     <img
                         src={app_icon_url}
                         alt={`${app_name ?? 'App'} icon`}
-                        className="w-16 h-16 rounded-xl object-cover border border-bg-border"
+                        className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border border-white/10 shadow-lg"
                         loading="lazy"
                     />
                 ) : (
-                    <div className="w-16 h-16 rounded-xl bg-bg-elevated border border-bg-border flex items-center justify-center">
-                        <span className="text-2xl" aria-hidden>📱</span>
+                    <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-bg-elevated border border-white/10 flex items-center justify-center shadow-lg">
+                        <span className="text-4xl" aria-hidden>📱</span>
                     </div>
                 )}
             </div>
 
             {/* Info */}
-            <div className="flex-1 min-w-0">
-                <h1 className="font-heading font-bold text-xl text-text-primary leading-tight truncate">
-                    {app_name ?? analysis.app_id}
-                </h1>
-                <p className="code-inline text-xs mt-1">{analysis.app_id}</p>
+            <div className="flex-1 min-w-0 text-center md:text-left">
+                <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
+                    <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-text-primary tracking-tight truncate">
+                        {app_name ?? analysis.app_id}
+                    </h1>
+                    <span className="code-inline text-[10px] w-fit mx-auto md:mx-0 px-2.5 py-1 bg-white/5 rounded-full text-brand-hover border border-white/5">
+                        {analysis.app_id}
+                    </span>
+                </div>
 
-                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-3">
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-8 gap-y-4">
                     {app_rating != null && (
-                        <MetaStat icon={<Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />}>
-                            <span className="text-text-primary font-semibold">{app_rating.toFixed(1)}</span>
-                            <span className="text-text-muted"> / 5</span>
+                        <MetaStat icon={<Star className="w-4 h-4 fill-amber-400 text-amber-400" />}>
+                            <span className="text-text-primary font-bold text-lg">{app_rating.toFixed(1)}</span>
+                            <span className="text-text-muted font-medium"> / 5</span>
                         </MetaStat>
                     )}
                     {app_installs && (
-                        <MetaStat icon={<Download className="w-3.5 h-3.5 text-text-muted" />}>
-                            <span className="text-text-secondary">{app_installs}</span>
+                        <MetaStat icon={<Download className="w-4 h-4 text-brand-primary" />}>
+                            <span className="text-text-secondary font-bold text-lg">{app_installs}</span>
                         </MetaStat>
                     )}
-                    <MetaStat icon={<RefreshCw className="w-3.5 h-3.5 text-text-muted" />}>
-                        <span className="text-text-muted">
-                            Analysed {new Date(analysis.created_at).toLocaleDateString('en-US', {
+                    <MetaStat icon={<RefreshCw className="w-4 h-4 text-text-muted" />}>
+                        <span className="text-text-muted font-medium text-sm">
+                            {new Date(analysis.created_at).toLocaleDateString('en-US', {
                                 year: 'numeric', month: 'short', day: 'numeric',
                             })}
                         </span>
@@ -95,36 +100,41 @@ export function AppMetaCard({ analysis }: AppMetaCardProps) {
 
             {/* Actions */}
             {isOwner && (
-                <div className="mt-4 md:mt-0 flex-shrink-0 w-full md:w-auto">
+                <div className="mt-6 md:mt-0 flex-shrink-0 w-full md:w-auto">
                     <button
                         onClick={handleShare}
                         disabled={isUpdating}
                         className={cn(
-                            "w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                            "w-full md:w-auto flex items-center justify-center gap-2.5 px-6 py-3 rounded-2xl text-sm font-bold transition-all duration-300",
                             isShared
-                                ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/20"
-                                : "bg-bg-elevated text-text-secondary hover:text-text-primary border border-bg-border hover:border-text-muted"
+                                ? "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border border-emerald-500/30"
+                                : "bg-white/5 text-text-secondary hover:text-text-primary border border-white/10 hover:border-white/20 hover:bg-white/10"
                         )}
                     >
                         {isUpdating ? (
-                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            <RefreshCw className="w-4 h-4 animate-spin text-brand-primary" />
                         ) : isCopied ? (
-                            <Check className="w-4 h-4" />
+                            <Check className="w-4 h-4 text-emerald-500" />
                         ) : isShared ? (
                             <Globe className="w-4 h-4" />
                         ) : (
                             <Share2 className="w-4 h-4" />
                         )}
-                        {isCopied
-                            ? "Link copied!"
-                            : isShared
-                                ? "Public Link"
-                                : "Share Report"}
+                        <span>
+                            {isCopied
+                                ? "Copied!"
+                                : isShared
+                                    ? "Public Access"
+                                    : "Share Report"}
+                        </span>
                     </button>
                     {isShared && (
-                        <p className="text-[10px] text-emerald-600/80 mt-1.5 text-center px-1">
-                            Anyone with the link can view
-                        </p>
+                        <div className="flex items-center justify-center gap-1.5 mt-3 opacity-60">
+                            <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                            <p className="text-[10px] text-emerald-500 font-bold tracking-wider uppercase">
+                                Available globally
+                            </p>
+                        </div>
                     )}
                 </div>
             )}

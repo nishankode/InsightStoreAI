@@ -81,44 +81,48 @@ export function StarHistogram({ data }: StarHistogramProps) {
     const totalReviews = data.reduce((s, d) => s + d.count, 0)
 
     return (
-        <div className="card">
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="font-heading font-semibold text-sm text-text-primary">
+        <div className="glass p-8 rounded-[2rem] border-white/5 shadow-glass animate-fade-in">
+            <div className="flex items-center justify-between mb-8">
+                <h2 className="font-heading font-bold text-lg text-text-primary tracking-tight">
                     Review Distribution
                 </h2>
-                <span className="text-text-muted text-xs">
-                    {totalReviews.toLocaleString()} reviews analysed
-                </span>
+                <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse" />
+                    <span className="text-text-secondary text-[10px] font-bold uppercase tracking-wider">
+                        {totalReviews.toLocaleString()} reviews
+                    </span>
+                </div>
             </div>
 
-            <ResponsiveContainer width="100%" height={180}>
+            <ResponsiveContainer width="100%" height={220}>
                 <BarChart
                     data={data}
-                    margin={{ top: 20, right: 8, left: -20, bottom: 0 }}
-                    barCategoryGap="30%"
+                    margin={{ top: 20, right: 10, left: -20, bottom: 0 }}
+                    barCategoryGap="35%"
                 >
                     <XAxis
                         dataKey="star"
                         tickFormatter={(v) => TIER_LABELS[v] ?? `${v}★`}
-                        tick={{ fill: 'var(--text-muted)', fontSize: 12, fontFamily: 'var(--font-body)' }}
+                        tick={{ fill: 'var(--text-muted)', fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-heading)' }}
                         axisLine={false}
                         tickLine={false}
+                        dy={10}
                     />
                     <YAxis
-                        tick={{ fill: 'var(--text-muted)', fontSize: 11, fontFamily: 'var(--font-body)' }}
+                        tick={{ fill: 'var(--text-muted)', fontSize: 11, fontWeight: 500, fontFamily: 'var(--font-body)' }}
                         axisLine={false}
                         tickLine={false}
                     />
                     <Tooltip
                         content={<CustomTooltip />}
-                        cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                        cursor={{ fill: 'rgba(255,255,255,0.03)', radius: 8 }}
                     />
-                    <Bar dataKey="count" radius={[4, 4, 0, 0]} label={<BarLabel />}>
+                    <Bar dataKey="count" radius={[8, 8, 4, 4]} label={<BarLabel />}>
                         {data.map((entry) => (
                             <Cell
                                 key={entry.star}
                                 fill={TIER_COLORS[entry.star] ?? 'var(--brand-primary)'}
-                                fillOpacity={0.85}
+                                fillOpacity={1}
                             />
                         ))}
                     </Bar>
@@ -126,14 +130,16 @@ export function StarHistogram({ data }: StarHistogramProps) {
             </ResponsiveContainer>
 
             {/* Legend */}
-            <div className="flex justify-center gap-5 mt-3">
+            <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 mt-8 pt-6 border-t border-white/5">
                 {data.map((d) => (
-                    <div key={d.star} className="flex items-center gap-1.5 text-xs text-text-muted">
+                    <div key={d.star} className="flex items-center gap-2.5 text-xs text-text-secondary font-semibold">
                         <span
-                            className="inline-block w-2.5 h-2.5 rounded-sm"
+                            className="inline-block w-3 h-3 rounded-full shadow-sm"
                             style={{ background: TIER_COLORS[d.star] }}
                         />
-                        {TIER_LABELS[d.star]} · {d.count}
+                        <span>{TIER_LABELS[d.star]}</span>
+                        <span className="text-text-muted opacity-60">·</span>
+                        <span className="text-text-primary">{d.count}</span>
                     </div>
                 ))}
             </div>

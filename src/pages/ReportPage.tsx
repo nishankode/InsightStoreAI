@@ -29,11 +29,15 @@ function ReportContent({ analysisId }: { analysisId: string }) {
     // ── Error ────────────────────────────────────────────────────────
     if (isError) {
         return (
-            <div className="page-wrapper flex items-center justify-center min-h-[60vh]">
-                <div className="card text-center max-w-sm">
-                    <p className="text-text-secondary mb-2">Report not found</p>
-                    <p className="text-text-muted text-sm">
-                        This analysis may have been deleted or the link is invalid.
+            <div className="relative min-h-[60vh] flex items-center justify-center p-6">
+                <div className="absolute inset-0 bg-grid opacity-20 -z-10" />
+                <div className="glass p-10 rounded-[2rem] text-center max-w-sm border-severity-high/20 animate-fade-in shadow-glass">
+                    <div className="w-16 h-16 rounded-full bg-severity-high/10 flex items-center justify-center text-severity-high mx-auto mb-6">
+                        <ShieldCheck className="w-8 h-8" />
+                    </div>
+                    <h2 className="font-heading font-bold text-xl mb-2 text-text-primary">Report not found</h2>
+                    <p className="text-text-secondary text-sm leading-relaxed font-medium">
+                        This analysis may have been deleted or the link is expired.
                     </p>
                 </div>
             </div>
@@ -43,10 +47,13 @@ function ReportContent({ analysisId }: { analysisId: string }) {
     // ── Loading skeletons ────────────────────────────────────────────
     if (isLoading || !analysis) {
         return (
-            <div className="page-wrapper">
-                <div className="max-w-3xl mx-auto flex flex-col gap-5 py-10">
-                    <AppMetaCardSkeleton />
-                    <StarHistogramSkeleton />
+            <div className="relative min-h-screen">
+                <div className="absolute inset-0 bg-grid opacity-20 -z-10" />
+                <div className="page-wrapper px-4">
+                    <div className="max-w-4xl mx-auto flex flex-col gap-6 py-16 animate-fade-in">
+                        <div className="glass p-10 rounded-[2rem] border-white/5 h-64 skeleton" />
+                        <div className="glass p-10 rounded-[2rem] border-white/5 h-48 skeleton" />
+                    </div>
                 </div>
             </div>
         )
@@ -55,35 +62,51 @@ function ReportContent({ analysisId }: { analysisId: string }) {
     // ── Analysis still running ───────────────────────────────────────
     if (analysis.status !== 'complete') {
         return (
-            <div className="page-wrapper">
-                <div className="max-w-3xl mx-auto flex flex-col gap-5 py-10">
-                    <AppMetaCardPending appId={analysis.app_id} />
-                    <div className="card text-center text-text-muted text-sm">
-                        Analysis in progress — results will appear here when complete.
+            <div className="relative min-h-screen">
+                <div className="absolute inset-0 bg-grid opacity-20 -z-10" />
+                <div className="page-wrapper px-4">
+                    <div className="max-w-4xl mx-auto flex flex-col gap-6 py-16">
+                        <AppMetaCardPending appId={analysis.app_id} />
+                        <div className="glass p-8 rounded-2xl border-white/5 text-center text-text-secondary font-medium animate-pulse">
+                            Generating your intelligence report. This usually takes 30-60 seconds...
+                        </div>
                     </div>
                 </div>
             </div>
         )
     }
 
-    // ── Complete ─────────────────────────────────────────────────────
+    // ── Complete Report ──────────────────────────────────────────────
     const reviewCounts =
         (analysis.review_counts as Record<string, number> | null) ?? {}
     const starData = buildStarDistribution(reviewCounts)
 
     return (
-        <div className="page-wrapper">
-            <div className="max-w-3xl mx-auto flex flex-col gap-5 py-10">
-                {/* App metadata card */}
-                <AppMetaCard analysis={analysis} />
+        <div className="relative min-h-screen">
+            {/* Background Aesthetics */}
+            <div className="absolute inset-0 bg-grid opacity-20 -z-10" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[100%] h-64 bg-glow-violet opacity-10 -z-10 blur-[100px]" />
 
-                {/* Star distribution histogram */}
-                {starData.some((d) => d.count > 0) && (
-                    <StarHistogram data={starData} />
-                )}
+            <div className="page-wrapper px-4">
+                <div className="max-w-4xl mx-auto flex flex-col gap-8 py-16 animate-fade-in">
+                    {/* App metadata card */}
+                    <div className="relative group/meta">
+                        <div className="absolute -inset-1 bg-brand-primary/10 rounded-[2.5rem] blur-2xl opacity-0 group-hover/meta:opacity-100 transition-opacity duration-500" />
+                        <AppMetaCard analysis={analysis} />
+                    </div>
 
-                {/* Pain point cards — TASK-13 */}
-                <PainPointCards analysisId={analysisId} />
+                    {/* Star distribution histogram */}
+                    {starData.some((d) => d.count > 0) && (
+                        <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
+                            <StarHistogram data={starData} />
+                        </div>
+                    )}
+
+                    {/* Pain point cards — TASK-13 */}
+                    <div className="animate-fade-in" style={{ animationDelay: '200ms' }}>
+                        <PainPointCards analysisId={analysisId} />
+                    </div>
+                </div>
             </div>
         </div>
     )
