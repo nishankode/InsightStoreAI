@@ -26,50 +26,35 @@ export interface ApiError {
 async function invokeEdgeFunction<T>(
     name: string,
     body: Record<string, unknown>,
-    userJwt?: string,
 ): Promise<T> {
-    const { data: { session } } = await supabase.auth.getSession()
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
-
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'apikey': supabaseAnonKey,
-        'Authorization': userJwt
-            ? `Bearer ${userJwt}`
-            : session?.access_token
-                ? `Bearer ${session.access_token}`
-                : `Bearer ${supabaseAnonKey}`,
-    }
-
-    const res = await fetch(`${supabaseUrl}/functions/v1/${name}`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
+    const { data, error } = await supabase.functions.invoke(name, {
+        body,
     })
 
-    // Always try to parse the response body as JSON
-    let json: unknown
-    try {
-        json = await res.json()
-    } catch {
-        // Non-JSON body (e.g. runtime crash before response)
-        throw new Error(`[${name}] HTTP ${res.status}: ${res.statusText || 'Unknown error'}`)
+    if (error) {
+        // FunctionsHttpError contains the error from the function response body if any
+        let message = error.message
+
+        // If it's an HTTP error, try to parse the body for a more specific message
+        if ('context' in error && error.context instanceof Response) {
+            try {
+                const body = await (error.context as Response).clone().json()
+                message = body.error || body.message || message
+            } catch {
+                // Not JSON, stay with original error.message
+            }
+        }
+
+        console.error(`[invokeEdgeFunction] ${name} failed:`, message)
+        throw new Error(message)
     }
 
-    if (!res.ok) {
-        // Extract structured error from the function's JSON body
-        const errObj = json as { error?: string; message?: string }
-        const detail = errObj?.error ?? errObj?.message ?? `HTTP ${res.status}`
-        throw new Error(detail)
+    // Check if the response body itself contains an error field (Edge Function custom pattern)
+    if (data && typeof data === 'object' && 'error' in data && data.error) {
+        throw new Error((data as ApiError).error)
     }
 
-    // Also check if a 200 response still contains an error field (Edge Function pattern)
-    if (typeof json === 'object' && json !== null && 'error' in json) {
-        throw new Error((json as ApiError).error)
-    }
-
-    return json as T
+    return data as T
 }
 
 // ── Public API functions ─────────────────────────────────────────
@@ -88,7 +73,6 @@ export async function fetchAppMetadata(query: string): Promise<AppMetadata> {
  */
 export async function runAnalysis(
     appId: string,
-    userJwt: string,
 ): Promise<{ analysis_id: string; status: string }> {
-    return invokeEdgeFunction('run-analysis', { app_id: appId }, userJwt)
+    return invokeEdgeFunction('run-analysis', { app_id: appId })
 }

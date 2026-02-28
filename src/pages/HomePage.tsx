@@ -43,7 +43,7 @@ export default function HomePage() {
                 navigate(`/auth?redirect=/?app=${encodeURIComponent(appId)}`)
                 throw new Error('unauthenticated')
             }
-            return runAnalysis(appId, session.access_token)
+            return runAnalysis(appId)
         },
         onSuccess: ({ analysis_id }) => {
             setAnalysisError(null)

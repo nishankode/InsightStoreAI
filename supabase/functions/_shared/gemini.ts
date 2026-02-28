@@ -26,9 +26,6 @@ export interface GeminiAnalysisResult {
 const GEMINI_API_BASE =
     'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent'
 
-const MAX_RETRIES = 4
-const BASE_DELAY_MS = 5000 // 5s, 10s, 20s (max 35s wait) fitting within 60s Kong timeout.
-
 // ── Prompt ────────────────────────────────────────────────────────
 function buildPrompt(reviewsJson: string): string {
     return `You are a senior product analyst. Analyse the following Google Play Store reviews and extract ALL recurring pain points that users experience.
@@ -92,18 +89,12 @@ function extractJson(text: string): GeminiAnalysisResult {
     return parsed
 }
 
-// ── Sleep helper ─────────────────────────────────────────────────
-function sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-// ── Main export: call Gemini with retry ──────────────────────────
+// ── Main export: call Gemini (no retry) ──────────────────────────
 export async function analyseReviewsWithGemini(
     reviews: Array<{ text: string; score: number }>,
     apiKey: string,
 ): Promise<GeminiAnalysisResult> {
     // Prepare review text — only include the review text and star rating
-    // Strip userName entirely (PII, assumption A6) and limit to meaningful reviews
     const reviewsForPrompt = reviews
         .filter((r) => r.text && r.text.trim().length > 10)
         .map((r) => `[${r.score}★] ${r.text.trim().substring(0, 500)}`)
@@ -115,66 +106,43 @@ export async function analyseReviewsWithGemini(
     const reviewsJson = JSON.stringify(reviewsForPrompt)
     const prompt = buildPrompt(reviewsJson)
 
-    let lastError: Error = new Error('Gemini call failed after all retries')
+    console.log('[gemini] Initiating analysis hit...')
 
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-        if (attempt > 0) {
-            const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1) // 1s, 2s, 4s
-            console.log(`[gemini] Retry ${attempt}/${MAX_RETRIES - 1} after ${delay}ms`)
-            await sleep(delay)
+    const response = await fetch(`${GEMINI_API_BASE}?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+                responseMimeType: 'application/json',
+                temperature: 0.1,
+                maxOutputTokens: 8192,
+            },
+        }),
+    })
+
+    if (!response.ok) {
+        const errorBody = await response.text()
+        if (response.status === 429) {
+            console.error('[gemini] Rate limited (429).')
+            throw new Error(`RateLimited`)
         }
-
-        try {
-            const response = await fetch(`${GEMINI_API_BASE}?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: {
-                        // Enable JSON mode for structured output (PRD Section 10)
-                        responseMimeType: 'application/json',
-                        temperature: 0.1,     // Low temperature for reliable structured output
-                        maxOutputTokens: 8192,
-                    },
-                }),
-            })
-
-            if (!response.ok) {
-                const errorBody = await response.text()
-                if (response.status === 429) {
-                    console.log(`[gemini] Rate limited (429). Response: ${errorBody.substring(0, 100)}...`)
-                    // Let the loop handle the retry, the next attempt will sleep for longer. 
-                    throw new Error(`RateLimited`)
-                }
-                throw new Error(`Gemini API ${response.status}: ${errorBody}`)
-            }
-
-            const data = await response.json() as {
-                candidates?: Array<{
-                    content?: { parts?: Array<{ text?: string }> }
-                    finishReason?: string
-                }>
-            }
-
-            const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text
-
-            if (!rawText) {
-                throw new Error('Gemini returned empty content')
-            }
-
-            return extractJson(rawText)
-        } catch (err) {
-            lastError = err instanceof Error ? err : new Error(String(err))
-            console.error(`[gemini] Attempt ${attempt + 1} failed:`, lastError.message)
-
-            // Don't retry on 400 Bad Request
-            if (lastError.message.includes('Gemini API 400:')) {
-                console.error('[gemini] Fatal 400 Error. Aborting retries.')
-                break
-            }
-        }
+        throw new Error(`Gemini API ${response.status}: ${errorBody}`)
     }
 
-    throw lastError
+    const data = await response.json() as {
+        candidates?: Array<{
+            content?: { parts?: Array<{ text?: string }> }
+            finishReason?: string
+        }>
+    }
+
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text
+
+    if (!rawText) {
+        throw new Error('Gemini returned empty content')
+    }
+
+    return extractJson(rawText)
 }
 

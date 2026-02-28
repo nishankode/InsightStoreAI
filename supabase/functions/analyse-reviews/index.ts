@@ -7,7 +7,7 @@
 // Auth: Bearer <supabase-anon-key> (called from run-analysis, TASK-07)
 
 import { handleCors, jsonResponse } from '../_shared/cors.ts'
-import { getAdminClient, broadcastProgress } from '../_shared/supabase-admin.ts'
+import { getAdminClient, broadcastProgress, isServiceRoleRequest } from '../_shared/supabase-admin.ts'
 import { analyseReviewsWithGemini, type PainPoint } from '../_shared/gemini.ts'
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -28,6 +28,13 @@ interface RequestBody {
 Deno.serve(async (req: Request) => {
     const corsResponse = handleCors(req)
     if (corsResponse) return corsResponse
+
+    // ── Internal Auth Check ──────────────────────────────────────────
+    // This function is internal-only and relies on the service role key.
+    if (!isServiceRoleRequest(req)) {
+        console.error('[analyse-reviews] Rejected unauthorized request (no service role)')
+        return jsonResponse({ error: 'unauthorized' }, 401)
+    }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -75,7 +82,7 @@ Deno.serve(async (req: Request) => {
         result = await analyseReviewsWithGemini(reviews, geminiApiKey)
     } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
-        console.error('[analyse-reviews] Gemini failed after 3 retries:', message)
+        console.error('[analyse-reviews] Gemini analysis hit failed:', message)
 
         await supabase
             .from('analyses')

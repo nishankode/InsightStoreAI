@@ -66,3 +66,17 @@ export async function broadcastProgress(params: {
         console.warn(`[broadcast] Failed to send stage=${stage}`)
     })
 }
+
+/**
+ * Checks if the request's Authorization header contains the valid service role key.
+ * Used to protect internal-only Edge Functions that are deployed with --no-verify-jwt.
+ */
+export function isServiceRoleRequest(req: Request): boolean {
+    const authHeader = req.headers.get('Authorization')
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+    if (!authHeader || !serviceRoleKey) return false
+
+    const token = authHeader.replace('Bearer ', '')
+    return token === serviceRoleKey
+}
