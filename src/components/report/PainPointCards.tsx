@@ -5,7 +5,6 @@
 import { useState } from 'react'
 import { usePainPoints } from '@/hooks/useAnalysis'
 import { PainPointCard, PainPointCardSkeleton } from './PainPointCard'
-import type { PainPointRow } from '@/lib/supabaseClient'
 
 const CATEGORIES = ['All', 'Bug', 'UX Issue', 'Performance', 'Feature Gap', 'Privacy', 'Support']
 const SEVERITIES = ['All', 'High', 'Medium', 'Low']
@@ -140,8 +139,8 @@ function FilterPill({
         <button
             onClick={onClick}
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all duration-150 ${active
-                    ? 'bg-brand-primary/10 border-brand-primary/30 text-brand-primary'
-                    : 'bg-bg-elevated border-bg-border text-text-muted hover:border-brand-primary/30 hover:text-text-secondary'
+                ? 'bg-brand-primary/10 border-brand-primary/30 text-brand-primary'
+                : 'bg-bg-elevated border-bg-border text-text-muted hover:border-brand-primary/30 hover:text-text-secondary'
                 }`}
             aria-pressed={active}
         >

@@ -49,6 +49,8 @@ export interface AnalysisRow {
     app_rating: number | null
     app_installs: string | null
     status: AnalysisStatus
+    review_counts: Record<string, number> | null
+    is_public: boolean
     shared_token: string | null
     created_at: string
 }

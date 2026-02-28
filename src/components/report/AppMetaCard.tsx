@@ -28,7 +28,7 @@ export function AppMetaCard({ analysis }: AppMetaCardProps) {
         const newSharedState = !isShared
 
         // Update database
-        const { error } = await supabase
+        const { error } = await (supabase as any)
             .from('analyses')
             .update({ is_public: newSharedState })
             .eq('id', id)

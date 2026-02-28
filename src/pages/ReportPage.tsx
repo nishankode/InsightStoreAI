@@ -6,14 +6,13 @@ import { useParams, Navigate } from 'react-router-dom'
 import { useAnalysis, buildStarDistribution } from '@/hooks/useAnalysis'
 import {
     AppMetaCard,
-    AppMetaCardSkeleton,
     AppMetaCardPending,
 } from '@/components/report/AppMetaCard'
 import {
     StarHistogram,
-    StarHistogramSkeleton,
 } from '@/components/report/StarHistogram'
 import { PainPointCards } from '@/components/report/PainPointCards'
+import { ShieldCheck } from 'lucide-react'
 
 
 export default function ReportPage() {

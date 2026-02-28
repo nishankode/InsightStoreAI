@@ -115,7 +115,7 @@ export function AnalysisProgress({ analysisId, onRetry }: AnalysisProgressProps)
         queryKey: ['diagnostic', analysisId],
         queryFn: async () => {
             const { data } = await supabase.from('analyses').select('app_name').eq('id', analysisId).single()
-            return data
+            return data as { app_name: string | null } | null
         },
         enabled: state.isError, // Only fetch if we're in the error state
     })

@@ -6,7 +6,6 @@
 import { useState } from 'react'
 import { Star, Download, Tag, RefreshCw, Code2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import type { AppMetadata } from '@/lib/api'
 
 interface AppPreviewCardProps {
