@@ -19,9 +19,9 @@ const STAGE_LABELS: Record<string, string> = {
     scraping_2star: 'Fetching 2-star reviews…',
     scraping_3star: 'Fetching 3-star reviews…',
     scraping_complete: 'Reviews collected. Starting AI analysis…',
-    ai_analysis_start: 'Gemini is reading the reviews…',
+    ai_analysis_start: 'AI is analysing the reviews…',
     ai_analysis_complete: 'Pain points extracted. Saving results…',
-    saving_results: 'Writing to database…',
+    saving_results: 'Saving for you…',
     complete: 'Analysis complete!',
     error: 'Something went wrong.',
 }
@@ -133,8 +133,7 @@ export function AnalysisProgress({ analysisId, onRetry }: AnalysisProgressProps)
                         Analysis failed
                     </h2>
                     <p className="text-text-secondary text-sm max-w-sm">
-                        Something went wrong during the analysis. This may be a temporary issue with
-                        the scraper or AI service.
+                        Something went wrong during the analysis. Please try again later.
                     </p>
 
                     {analysisData?.app_name && analysisData.app_name.includes('failed') && (
