@@ -57,7 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <nav className="flex items-center gap-2" aria-label="Main navigation">
                         <NavLink
                             to="/"
-                            active={isHomePage}
+                            active={true} // Always show as primary pill/button
                             onClick={() => {
                                 if (isHomePage) {
                                     window.dispatchEvent(new CustomEvent('applifter:scroll-to-search'))

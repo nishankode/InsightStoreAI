@@ -120,7 +120,7 @@ function SectionHeader({ count, total }: { count: number | null; total?: number 
 
 const SEVERITY_DOT: Record<string, string> = {
     High: 'bg-severity-high',
-    Medium: 'bg-severity-medium',
+    Medium: 'bg-severity-med', // Matches tailwind.config colors.severity.med
     Low: 'bg-severity-low',
 }
 

@@ -14,17 +14,17 @@ interface PainPointCardProps {
 const SEVERITY_CONFIG = {
     High: {
         label: 'High',
-        badgeClass: 'badge-error',
+        badgeClass: 'badge-high',
         dotColor: 'bg-severity-high',
     },
     Medium: {
         label: 'Medium',
-        badgeClass: 'badge-warn',
-        dotColor: 'bg-severity-medium',
+        badgeClass: 'badge-medium',
+        dotColor: 'bg-severity-med', // Matches tailwind.config colors.severity.med
     },
     Low: {
         label: 'Low',
-        badgeClass: 'badge-info',
+        badgeClass: 'badge-low',
         dotColor: 'bg-severity-low',
     },
 } as const
@@ -60,14 +60,11 @@ export function PainPointCard({ painPoint }: PainPointCardProps) {
             {/* ── Header row ──────────────────────────────────────────── */}
             <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3 flex-wrap">
-                    {/* Severity badge with Glow */}
-                    <div className="relative group/sev">
-                        <div className={cn('absolute -inset-1 blur-md opacity-40 rounded-full transition-opacity group-hover/sev:opacity-70', sev.dotColor)} />
-                        <span className={cn('relative badge px-3 py-1 text-[10px] font-bold tracking-wider uppercase border-white/10 shadow-sm', sev.badgeClass)}>
-                            <span className={cn('inline-block w-1.5 h-1.5 rounded-full mr-2 shadow-sm', sev.dotColor)} />
-                            {sev.label}
-                        </span>
-                    </div>
+                    {/* Severity badge */}
+                    <span className={cn('badge px-3 py-1 text-[10px] font-bold tracking-wider uppercase border-white/10 shadow-sm', sev.badgeClass)}>
+                        <span className={cn('inline-block w-1.5 h-1.5 rounded-full mr-2 shadow-sm', sev.dotColor)} />
+                        {sev.label}
+                    </span>
 
                     {/* Category tag */}
                     <span className="badge bg-white/5 text-text-muted border border-white/5 text-[10px] font-bold tracking-wider uppercase px-3 py-1">
