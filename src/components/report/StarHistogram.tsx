@@ -56,13 +56,19 @@ function BarLabel({
     y = 0,
     width = 0,
     value,
+    totalReviews,
 }: {
     x?: number
     y?: number
     width?: number
     value?: number
+    totalReviews?: number
 }) {
-    if (!value) return null
+    if (!value || !totalReviews) return null
+
+    // Calculate actual percentage instead of displaying raw raw as percentage
+    const percentage = Math.round((value / totalReviews) * 100)
+
     return (
         <text
             x={x + width / 2}
@@ -72,7 +78,7 @@ function BarLabel({
             fontSize={11}
             fontFamily="var(--font-body)"
         >
-            {value}%
+            {percentage}%
         </text>
     )
 }
@@ -117,7 +123,7 @@ export function StarHistogram({ data }: StarHistogramProps) {
                         content={<CustomTooltip />}
                         cursor={{ fill: 'rgba(255,255,255,0.03)', radius: 8 }}
                     />
-                    <Bar dataKey="count" radius={[8, 8, 4, 4]} label={<BarLabel />}>
+                    <Bar dataKey="count" radius={[8, 8, 4, 4]} label={<BarLabel totalReviews={totalReviews} />}>
                         {data.map((entry) => (
                             <Cell
                                 key={entry.star}

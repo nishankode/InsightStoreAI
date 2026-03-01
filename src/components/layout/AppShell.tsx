@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { LogOut, User, Sparkles } from 'lucide-react'
+import { LogOut, User, Sparkles, BarChart2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabaseClient'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -68,8 +68,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         </NavLink>
 
                         {user ? (
-                            // ── Authenticated: email + sign out ─────────────────
-                            <div className="flex items-center gap-3 ml-2 border-l border-bg-border pl-4">
+                            // ── Authenticated: My Reports + email + sign out ─────
+                            <div className="flex items-center gap-2 ml-2 border-l border-bg-border pl-4">
+                                <Link
+                                    to="/dashboard"
+                                    className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-text-secondary hover:text-brand-hover hover:bg-brand-primary/10 px-3 py-1.5 rounded-full transition-all border border-transparent hover:border-brand-primary/20"
+                                    aria-label="My Reports"
+                                >
+                                    <BarChart2 className="w-3.5 h-3.5" aria-hidden />
+                                    My Reports
+                                </Link>
                                 <span className="hidden sm:flex items-center gap-1.5 text-xs text-text-muted">
                                     <User className="w-3.5 h-3.5" aria-hidden />
                                     <span className="max-w-[120px] truncate font-medium">{user.email}</span>

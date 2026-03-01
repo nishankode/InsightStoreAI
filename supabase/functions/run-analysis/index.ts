@@ -48,6 +48,9 @@ async function runPipeline(
         await broadcastProgress({ supabaseUrl, serviceRoleKey, analysisId, stage: 'scraping', percent: 2 })
 
         // ── Step 1: Scrape reviews ─────────────────────────────────────
+        // scrape-reviews also captures extended metadata (app_version, contains_iap,
+        // ad_supported, total_ratings, total_reviews, dev_response_rate, avg_reply_time_days)
+        // and stores it directly in the analyses row.
         const scrapeRes = await callFunction('scrape-reviews', {
             app_id: appId,
             analysis_id: analysisId,
@@ -75,10 +78,28 @@ async function runPipeline(
             return
         }
 
+        // ── Step 1b: Fetch the extended metadata scrape-reviews stored ─
+        // We read it back from the DB so analyse-reviews can use it in
+        // the Gemini prompt as app context (PRD F-03.1, F-03.6).
+        const { data: analysisRow } = await adminClient
+            .from('analyses')
+            .select('app_version, contains_iap, ad_supported, app_rating, app_category')
+            .eq('id', analysisId)
+            .single()
+
+        const appContext = {
+            appVersion: analysisRow?.app_version ?? null,
+            containsIAP: analysisRow?.contains_iap ?? false,
+            adSupported: analysisRow?.ad_supported ?? false,
+            appRating: analysisRow?.app_rating ?? null,
+            appCategory: analysisRow?.app_category ?? null,
+        }
+
         // ── Step 2: Analyse with Gemini ────────────────────────────────
         const analyseRes = await callFunction('analyse-reviews', {
             analysis_id: analysisId,
             reviews,
+            app_context: appContext,
         })
 
         if (!analyseRes.ok) {
@@ -155,13 +176,10 @@ Deno.serve(async (req: Request) => {
     console.log('[run-analysis] Auth Context:', { userId: confirmedUserId })
 
     // ── Verify User Exists via Admin Client ──────────────────────────
-    // This confirms the user is valid in Supabase Auth WITHOUT re-verifying the signature.
     const { data: authData, error: authError } = await adminClient.auth.admin.getUserById(confirmedUserId)
 
     if (authError || !authData.user) {
         console.warn('[run-analysis] Auth verification failed for user:', confirmedUserId, authError?.message)
-        // If the user is missing from Auth but exists in Gateway metadata (rare), 
-        // we still allow the logic to proceed to hit the DB next.
     }
 
     // ── Parse body ───────────────────────────────────────────────────
@@ -181,8 +199,6 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── Verify User Row Exists (Direct DB check) ─────────────────────
-    // Instead of using auth.getUserById (which might fail if the service key is stale),
-    // we go straight to our public.users table.
     console.log(`[run-analysis] Checking user row for ${confirmedUserId}`)
     const { data: userRow, error: userRowError } = await adminClient
         .from('users')
@@ -190,7 +206,7 @@ Deno.serve(async (req: Request) => {
         .eq('id', confirmedUserId)
         .single()
 
-    if (userRowError && userRowError.code !== 'PGRST116') { // PGRST116 = 0 rows (expected on fresh signups)
+    if (userRowError && userRowError.code !== 'PGRST116') {
         console.error('[run-analysis] Select users error:', userRowError)
         return jsonResponse({ error: 'select_users_failed', detail: userRowError.message }, 500)
     }
@@ -207,8 +223,6 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── Ensure public.users row exists ────────────────────────────────
-    // Supabase Auth does NOT auto-create public.users rows on signup.
-    // Without this, the analyses.user_id FK constraint will reject the insert.
     console.log(`[run-analysis] Upserting users row for id ${confirmedUserId}`)
     const { error: upsertError } = await adminClient
         .from('users')
@@ -255,8 +269,6 @@ Deno.serve(async (req: Request) => {
     const analysisId = analysis.id
 
     // ── Return analysis_id IMMEDIATELY ──────────────────────────────
-    // The pipeline runs in the background via EdgeRuntime.waitUntil().
-    // The client subscribes to Realtime events for progress.
     const pipelinePromise = runPipeline(
         analysisId,
         appId,
@@ -264,14 +276,11 @@ Deno.serve(async (req: Request) => {
         effectiveUserRow?.analysis_count ?? 0,
     )
 
-    // EdgeRuntime.waitUntil keeps the function alive after the response is sent
     // @ts-ignore — EdgeRuntime is a Supabase-specific runtime global
     if (typeof EdgeRuntime !== 'undefined') {
         // @ts-ignore
         EdgeRuntime.waitUntil(pipelinePromise)
     }
-    // (In local dev without EdgeRuntime, the pipeline runs synchronously after this point
-    //  — this is fine for testing; production uses waitUntil)
 
     return jsonResponse({ analysis_id: analysisId, status: 'started' })
 })

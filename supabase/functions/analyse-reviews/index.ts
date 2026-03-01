@@ -1,28 +1,56 @@
 // supabase/functions/analyse-reviews/index.ts
-// Sends scraped reviews to Gemini 2.0 Flash, extracts structured pain points,
+// Sends scraped reviews to Gemini 2.5 Flash Lite, extracts structured pain points,
 // and persists them to the pain_points table.
+// Accepts app_context from run-analysis to enrich the Gemini prompt (PRD F-03.1, F-03.6).
+// Stores version_tag per pain point row (PRD F-03.5).
 //
 // POST /functions/v1/analyse-reviews
-// Body: { analysis_id: string, reviews: ReviewItem[] }
-// Auth: Bearer <supabase-anon-key> (called from run-analysis, TASK-07)
+// Body: { analysis_id: string, reviews: ReviewItem[], app_context?: AppContext }
+// Auth: Bearer <service-role-key> (called from run-analysis)
 
 import { handleCors, jsonResponse } from '../_shared/cors.ts'
 import { getAdminClient, broadcastProgress, isServiceRoleRequest } from '../_shared/supabase-admin.ts'
-import { analyseReviewsWithGemini, type PainPoint } from '../_shared/gemini.ts'
+import {
+    analyseReviewsWithGemini,
+    type PainPoint,
+    type ReviewItemForGemini,
+    type AppContext,
+} from '../_shared/gemini.ts'
 
 // ── Types ─────────────────────────────────────────────────────────
+
+// Full review shape as received from scrape-reviews (superset of ReviewItemForGemini)
 interface ReviewItem {
     text: string
     score: number
     date: string
     thumbsUpCount: number
     userName: string
+    replyText: string | null
+    replyDate: string | null
+    version: string | null
 }
 
 interface RequestBody {
     analysis_id: string
     reviews: ReviewItem[]
+    app_context?: AppContext
 }
+
+// ── Validation sets ───────────────────────────────────────────────
+const VALID_CATEGORIES = [
+    'Bug',
+    'UX Issue',
+    'Performance',
+    'Feature Gap',
+    'Privacy',
+    'Support',
+    'Monetization Friction',   // PRD F-03: 7th category
+] as const
+
+const VALID_SEVERITIES = ['High', 'Medium', 'Low'] as const
+const VALID_PHASES = ['Quick Win', 'Short-Term', 'Long-Term'] as const
+const VALID_EFFORT_IMPACT = ['Low', 'Medium', 'High'] as const
 
 // ── Main Handler ──────────────────────────────────────────────────
 Deno.serve(async (req: Request) => {
@@ -30,7 +58,6 @@ Deno.serve(async (req: Request) => {
     if (corsResponse) return corsResponse
 
     // ── Internal Auth Check ──────────────────────────────────────────
-    // This function is internal-only and relies on the service role key.
     if (!isServiceRoleRequest(req)) {
         console.error('[analyse-reviews] Rejected unauthorized request (no service role)')
         return jsonResponse({ error: 'unauthorized' }, 401)
@@ -53,7 +80,7 @@ Deno.serve(async (req: Request) => {
         return jsonResponse({ error: 'invalid_request_body' }, 400)
     }
 
-    const { analysis_id, reviews } = body
+    const { analysis_id, reviews, app_context } = body
 
     if (!analysis_id || typeof analysis_id !== 'string') {
         return jsonResponse({ error: 'invalid_analysis_id' }, 400)
@@ -76,44 +103,45 @@ Deno.serve(async (req: Request) => {
 
     await broadcast('ai_analysis_start', 50)
 
-    // ── Call Gemini 2.0 Flash ────────────────────────────────────────
+    // ── Map reviews to the shape Gemini expects ──────────────────────
+    // Include thumbsUpCount, replyText, version for richer prompt context
+    const reviewsForGemini: ReviewItemForGemini[] = reviews.map((r) => ({
+        text: r.text,
+        score: r.score,
+        thumbsUpCount: r.thumbsUpCount ?? 0,
+        replyText: r.replyText ?? null,
+        version: r.version ?? null,
+    }))
+
+    // ── Call Gemini 2.5 Flash Lite ───────────────────────────────────
     let result: { pain_points: PainPoint[] }
     try {
-        result = await analyseReviewsWithGemini(reviews, geminiApiKey)
+        result = await analyseReviewsWithGemini(reviewsForGemini, geminiApiKey, app_context)
     } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
-        console.error('[analyse-reviews] Gemini analysis hit failed:', message)
-
+        console.error('[analyse-reviews] Gemini analysis failed:', message)
         await supabase
             .from('analyses')
             .update({ status: 'error' })
             .eq('id', analysis_id)
-
         return jsonResponse({ error: 'gemini_unavailable', detail: message }, 503)
     }
 
     await broadcast('ai_analysis_complete', 85)
 
     // ── Validate pain points structure ───────────────────────────────
-    const validCategories = ['Bug', 'UX Issue', 'Performance', 'Feature Gap', 'Privacy', 'Support']
-    const validSeverities = ['High', 'Medium', 'Low']
-    const validPhases = ['Quick Win', 'Short-Term', 'Long-Term']
-    const validEffortImpact = ['Low', 'Medium', 'High']
-
-    const validPainPoints = result.pain_points.filter((pp) => {
-        return (
-            validCategories.includes(pp.category) &&
-            validSeverities.includes(pp.severity) &&
-            typeof pp.frequency === 'number' &&
-            typeof pp.description === 'string' &&
-            Array.isArray(pp.representative_quotes) &&
-            pp.improvement &&
-            typeof pp.improvement.recommendation === 'string' &&
-            validPhases.includes(pp.improvement.phase) &&
-            validEffortImpact.includes(pp.improvement.effort) &&
-            validEffortImpact.includes(pp.improvement.impact)
-        )
-    })
+    const validPainPoints = result.pain_points.filter((pp) =>
+        (VALID_CATEGORIES as readonly string[]).includes(pp.category) &&
+        (VALID_SEVERITIES as readonly string[]).includes(pp.severity) &&
+        typeof pp.frequency === 'number' &&
+        typeof pp.description === 'string' &&
+        Array.isArray(pp.representative_quotes) &&
+        pp.improvement &&
+        typeof pp.improvement.recommendation === 'string' &&
+        (VALID_PHASES as readonly string[]).includes(pp.improvement.phase) &&
+        (VALID_EFFORT_IMPACT as readonly string[]).includes(pp.improvement.effort) &&
+        (VALID_EFFORT_IMPACT as readonly string[]).includes(pp.improvement.impact)
+    )
 
     if (validPainPoints.length === 0) {
         console.error('[analyse-reviews] No valid pain points after validation.')
@@ -127,15 +155,18 @@ Deno.serve(async (req: Request) => {
     await broadcast('saving_results', 95)
 
     // ── Insert pain points into Postgres ─────────────────────────────
-    // Using service_role client — bypasses RLS (pain_points has no client INSERT policy)
+    // version_tag stored per row — nullable (PRD F-03.5)
     const painPointRows = validPainPoints.map((pp) => ({
         analysis_id,
         category: pp.category,
         severity: pp.severity,
         frequency: pp.frequency,
         description: pp.description,
-        representative_quotes: pp.representative_quotes.slice(0, 2), // enforce max 2 quotes
+        representative_quotes: pp.representative_quotes.slice(0, 2),
         improvement: pp.improvement,
+        version_tag: pp.version_tag && pp.version_tag !== 'null'
+            ? pp.version_tag
+            : null,
     }))
 
     const { error: insertError } = await supabase

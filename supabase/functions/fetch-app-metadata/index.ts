@@ -54,22 +54,24 @@ Deno.serve(async (req: Request) => {
         return jsonResponse({ error: 'invalid_input' }, 400)
     }
 
-    // ── Extract package ID ───────────────────────────────────────────
+    // ── Extract package ID from input ────────────────────────────────
     const packageId = extractPackageId(query)
     if (!packageId) {
         return jsonResponse({ error: 'invalid_input' }, 400)
     }
 
     // ── Fetch app metadata from Google Play ──────────────────────────
+    // Force en-US store so the scraper's HTML parser always gets the
+    // format it expects (prevents parse failures on regional apps).
     try {
-        const app = await gplay.app({ appId: packageId, throttle: 10 })
+        const app = await gplay.app({ appId: packageId, country: 'us', lang: 'en', throttle: 10 })
 
         return jsonResponse({
             app_id: app.appId,
             name: app.title,
             icon: app.icon,
             developer: app.developer,
-            rating: Math.round((app.score ?? 0) * 10) / 10,  // 1dp
+            rating: Math.round((app.score ?? 0) * 10) / 10,
             installs: app.installs ?? app.maxInstalls?.toLocaleString() ?? 'Unknown',
             category: app.genre ?? app.genreId ?? 'Unknown',
             last_updated: app.updated
@@ -79,7 +81,6 @@ Deno.serve(async (req: Request) => {
     } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
 
-        // google-play-scraper throws a 404-like error for unknown apps
         if (
             message.includes('404') ||
             message.toLowerCase().includes('not found') ||

@@ -19,6 +19,20 @@ async function fetchAnalysis(analysisId: string): Promise<AnalysisRow> {
     return data
 }
 
+// ── Fetch analysis by shared_token (for public/shared reports) ────
+async function fetchAnalysisByToken(sharedToken: string): Promise<AnalysisRow> {
+    const { data, error } = await supabase
+        .from('analyses')
+        .select('*')
+        .eq('shared_token', sharedToken)
+        .eq('is_public', true)
+        .single()
+
+    if (error) throw new Error(error.message)
+    if (!data) throw new Error('Shared report not found or not public')
+    return data
+}
+
 // ── Fetch pain points for an analysis ────────────────────────────
 async function fetchPainPoints(analysisId: string): Promise<PainPointRow[]> {
     const { data, error } = await supabase
@@ -45,6 +59,16 @@ export function useAnalysis(analysisId: string) {
             return status === 'complete' || status === 'error' ? false : 5000
         },
         staleTime: 0,
+    })
+}
+
+/** Fetch a single analysis row by its shared_token (public reports only). */
+export function useAnalysisByToken(sharedToken: string) {
+    return useQuery({
+        queryKey: ['analysis_shared', sharedToken],
+        queryFn: () => fetchAnalysisByToken(sharedToken),
+        staleTime: 1000 * 60 * 5, // shared reports are complete — no polling needed
+        retry: false,
     })
 }
 

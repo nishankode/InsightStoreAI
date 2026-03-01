@@ -2,7 +2,7 @@
 // TASK-13: Single pain point card — severity badge, frequency, description, quotes.
 // One card per pain_points row; displayed in a grid on the ReportPage.
 
-import { Quote, Zap, Clock, TrendingUp } from 'lucide-react'
+import { Quote, Zap, Clock, TrendingUp, DollarSign, Bug, Layout, Activity, Lightbulb, ShieldAlert, HeartHandshake, GitCommit } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { PainPointRow } from '@/lib/supabaseClient'
 
@@ -67,9 +67,24 @@ export function PainPointCard({ painPoint }: PainPointCardProps) {
                     </span>
 
                     {/* Category tag */}
-                    <span className="badge bg-white/5 text-text-muted border border-white/5 text-[10px] font-bold tracking-wider uppercase px-3 py-1">
+                    <span className="badge bg-white/5 text-text-muted border border-white/5 text-[10px] font-bold tracking-wider uppercase px-3 py-1 flex items-center gap-1.5">
+                        {painPoint.category === 'Bug' && <Bug className="w-3 h-3" />}
+                        {painPoint.category === 'UX Issue' && <Layout className="w-3 h-3" />}
+                        {painPoint.category === 'Performance' && <Activity className="w-3 h-3" />}
+                        {painPoint.category === 'Feature Gap' && <Lightbulb className="w-3 h-3" />}
+                        {painPoint.category === 'Privacy' && <ShieldAlert className="w-3 h-3" />}
+                        {painPoint.category === 'Support' && <HeartHandshake className="w-3 h-3" />}
+                        {painPoint.category === 'Monetization Friction' && <DollarSign className="w-3 h-3 text-amber-500" />}
                         {painPoint.category}
                     </span>
+
+                    {/* Version tag */}
+                    {painPoint.version_tag && (
+                        <span className="badge bg-brand-primary/10 text-brand-primary border border-brand-primary/20 text-[10px] font-bold tracking-tight px-2 py-1 flex items-center gap-1">
+                            <GitCommit className="w-3 h-3" />
+                            v{painPoint.version_tag}
+                        </span>
+                    )}
                 </div>
 
                 {/* Frequency pill */}

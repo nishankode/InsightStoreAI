@@ -3,6 +3,9 @@
 
 import { supabase } from './supabaseClient'
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+
 // ── Types (mirroring Edge Function contracts) ────────────────────
 export interface AppMetadata {
     app_id: string
@@ -61,10 +64,29 @@ async function invokeEdgeFunction<T>(
 
 /**
  * Fetch app metadata from Google Play (no auth required).
- * Accepts a Play Store URL or bare package ID.
+ * Uses raw fetch with only the anon key — NOT supabase.functions.invoke —
+ * so the user's JWT is never injected. This makes the behaviour identical
+ * whether the caller is signed in or out.
  */
 export async function fetchAppMetadata(query: string): Promise<AppMetadata> {
-    return invokeEdgeFunction<AppMetadata>('fetch-app-metadata', { query })
+    const url = `${supabaseUrl}/functions/v1/fetch-app-metadata`
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseAnonKey,
+            'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({ query }),
+    })
+
+    const json = await res.json()
+
+    if (!res.ok || (json && json.error)) {
+        throw new Error(json?.error ?? `HTTP ${res.status}`)
+    }
+
+    return json as AppMetadata
 }
 
 /**

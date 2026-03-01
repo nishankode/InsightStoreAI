@@ -3,19 +3,21 @@
 // Skeleton version shown while data loads.
 
 import { useEffect, useState } from 'react'
-import { Star, Download, RefreshCw, Share2, Check, Globe, Smartphone } from 'lucide-react'
+import { Star, Download, RefreshCw, Share2, Check, Globe, Smartphone, Tag } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabaseClient'
 import type { AnalysisRow } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { fetchAppMetadata } from '@/lib/api'
+import { DevResponsivenessBadge } from './DevResponsivenessBadge'
+import { BenchmarkStrip } from './BenchmarkStrip'
 
 interface AppMetaCardProps {
     analysis: AnalysisRow
 }
 
 export function AppMetaCard({ analysis }: AppMetaCardProps) {
-    const { app_name, app_icon_url, app_rating, app_installs, user_id, is_public, id } = analysis
+    const { app_name, app_icon_url, app_rating, app_installs, app_category, user_id, is_public, id, shared_token } = analysis
     const { user } = useAuth()
     const isOwner = user?.id === user_id
     const [isShared, setIsShared] = useState(is_public)
@@ -72,8 +74,11 @@ export function AppMetaCard({ analysis }: AppMetaCardProps) {
         if (!error) {
             setIsShared(newSharedState)
             if (newSharedState) {
-                // Copy link and show feedback
-                const link = `${window.location.origin}/report/${id}`
+                // Copy shared_token link — more secure than raw analysis ID
+                const token = shared_token ?? id
+                const link = shared_token
+                    ? `${window.location.origin}/report/shared/${token}`
+                    : `${window.location.origin}/report/${id}`
                 await navigator.clipboard.writeText(link)
                 setIsCopied(true)
                 setTimeout(() => setIsCopied(false), 2000)
@@ -117,13 +122,18 @@ export function AppMetaCard({ analysis }: AppMetaCardProps) {
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-8 gap-y-4">
                     {metadata.rating != null && (
                         <MetaStat icon={<Star className="w-4 h-4 fill-amber-400 text-amber-400" />}>
-                            <span className="text-text-primary font-bold text-lg">{metadata.rating.toFixed(1)}</span>
+                            <span className="text-text-primary font-bold text-lg">{Number(metadata.rating).toFixed(1)}</span>
                             <span className="text-text-muted font-medium"> / 5</span>
                         </MetaStat>
                     )}
                     {metadata.installs && (
                         <MetaStat icon={<Download className="w-4 h-4 text-brand-primary" />}>
                             <span className="text-text-secondary font-bold text-lg">{metadata.installs}</span>
+                        </MetaStat>
+                    )}
+                    {app_category && (
+                        <MetaStat icon={<Tag className="w-4 h-4 text-brand-primary/70" />}>
+                            <span className="text-text-secondary font-medium text-sm">{app_category}</span>
                         </MetaStat>
                     )}
                     <MetaStat icon={<RefreshCw className="w-4 h-4 text-text-muted" />}>
@@ -133,6 +143,14 @@ export function AppMetaCard({ analysis }: AppMetaCardProps) {
                             })}
                         </span>
                     </MetaStat>
+                </div>
+
+                <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <BenchmarkStrip analysis={analysis} />
+                    <DevResponsivenessBadge
+                        rate={analysis.dev_response_rate}
+                        avgDays={analysis.avg_reply_time_days}
+                    />
                 </div>
             </div>
 

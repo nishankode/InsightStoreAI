@@ -11,6 +11,7 @@ const HomePage = lazy(() => import('@/pages/HomePage'))
 const ReportPage = lazy(() => import('@/pages/ReportPage'))
 const AuthPage = lazy(() => import('@/pages/AuthPage'))
 const AnalysisPage = lazy(() => import('@/pages/AnalysisPage'))
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 
 // ── Full-screen loading fallback ─────────────────────────────────
 function PageLoader() {
@@ -50,6 +51,8 @@ export default function App() {
           <Route element={<ShellLayout />}>
             <Route index element={<HomePage />} />
             <Route path="/report/:analysisId" element={<ReportPage />} />
+            <Route path="/report/shared/:sharedToken" element={<ReportPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
           </Route>
 
           {/* Catch-all — redirect unknown routes to home */}

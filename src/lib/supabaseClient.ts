@@ -17,7 +17,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export type AnalysisStatus = 'pending' | 'scraping' | 'analysing' | 'complete' | 'error'
 export type UserPlan = 'free' | 'builder' | 'pro' | 'agency'
 export type Severity = 'High' | 'Medium' | 'Low'
-export type Category = 'Bug' | 'UX Issue' | 'Performance' | 'Feature Gap' | 'Privacy' | 'Support'
+export type Category = 'Bug' | 'UX Issue' | 'Performance' | 'Feature Gap' | 'Privacy' | 'Support' | 'Monetization Friction'
 export type Phase = 'Quick Win' | 'Short-Term' | 'Long-Term'
 export type EffortImpact = 'Low' | 'Medium' | 'High'
 
@@ -37,6 +37,7 @@ export interface PainPointRow {
     description: string
     representative_quotes: string[]
     improvement: ImprovementPlan
+    version_tag: string | null
     created_at: string
 }
 
@@ -48,10 +49,18 @@ export interface AnalysisRow {
     app_icon_url: string | null
     app_rating: number | null
     app_installs: string | null
+    app_category: string | null
     status: AnalysisStatus
     review_counts: Record<string, number> | null
     is_public: boolean
     shared_token: string | null
+    app_version: string | null
+    contains_iap: boolean | null
+    ad_supported: boolean | null
+    total_ratings: number | null
+    total_reviews: number | null
+    dev_response_rate: number | null
+    avg_reply_time_days: number | null
     created_at: string
 }
 
